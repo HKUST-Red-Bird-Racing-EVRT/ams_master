@@ -1,0 +1,8 @@
+#ifndef BOARDCONFIG_H
+#define BOARDCONFIG_H
+
+#define CAN0_CS PIN_PB1
+#define CAN1_CS PIN_PB2
+
+
+#endif // BOARDCONFIG_H
