@@ -8,25 +8,31 @@
 
 #include "BoardConfig.h"
 #include "AmsState.hpp"
+#include "AmsHelper.hpp"
 #include "CanHelper.hpp"
 
-MCP2515 mcp2515_0(CAN0_CS);
+MCP2515 can_slave(CAN0_CS);
 MCP2515 mcp2515_1(CAN1_CS);
-can_frame rx_frame_0;
+can_frame rx_slave_frame;
 
-AmsState ams_state;
+AmsState ams;
+AmsHelper ams_helper(ams);
+CanHelper can_helper(can_slave, mcp2515_1, ams);
 
-void setup() {
+void setup()
+{
   // put your setup code here, to run once:
 
   pinMode(CAN0_CS, OUTPUT);
   pinMode(CAN1_CS, OUTPUT);
-
 }
 
-void loop() {
+void loop()
+{
   // put your main code here, to run repeatedly:
-  
 
+  if (can_slave.readMessage(&rx_slave_frame) == MCP2515::ERROR_OK)
+  {
+    can_helper.packSlaveData(rx_slave_frame);
+  }
 }
-

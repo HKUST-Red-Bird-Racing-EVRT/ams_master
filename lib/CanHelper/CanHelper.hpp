@@ -4,6 +4,7 @@
 #include "AmsState.hpp"
 
 #include <stdint.h>
+#include <Arduino.h>
 
 // ignore -Wpedantic warnings for mcp2515.h
 #pragma GCC diagnostic push
@@ -19,16 +20,26 @@
 #define NUM_SLAVE 10
 #define NUM_SLAVE_FRAME 5
 
+#define COMMUNICATION_TIMEOUT_MAX 500
+
+struct BufferData
+{
+    can_frame frame;
+    uint32_t timestamp;
+};
+
 class CanHelper {
     public:
-        CanHelper(MCP2515 &mcp2515_0_, MCP2515 &mcp2515_1_, AmsState &ams_state_);
+        CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_);
         CanHelper() = delete; // Delete the default constructor to prevent its use
         void packSlaveData(can_frame &rx_frame);
+        bool isCommunicationTimeout();
 
     private:
-        MCP2515 &mcp2515_0;
+        MCP2515 &can_slave;
         MCP2515 &mcp2515_1;
-        AmsState &ams_state;
+        AmsState &ams;
+        BufferData rx_slave_buffer[NUM_SLAVE * NUM_SLAVE_FRAME]; // Buffer for each slave, including cell voltages and NTC temperatures
 
 };
 
