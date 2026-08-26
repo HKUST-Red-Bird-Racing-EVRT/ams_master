@@ -6,6 +6,22 @@ CanHelper::CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_)
     // Constructor implementation
 }
 
+void CanHelper::packingMaskCellBalState(uint16_t &flag) {
+    if (flag & CELLBAL_STATE_BIT)
+    {
+        ams.cellbal_active = true;
+
+        if (ams.cellbal_odd)
+        {
+            flag &= CELLBAL_ODD_MASK; // Clear even bits, keep odd bits
+        }
+        else
+        {
+            flag &= CELLBAL_EVEN_MASK; // Clear odd bits, keep even bits
+        }
+    }
+}
+
 void CanHelper::packSlaveData(can_frame &rx_frame)
 {
     // Implementation of the packSlaveData function
@@ -25,6 +41,7 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
         {
         case 0:
             ams.cellbal_states[slave_index] = rx_frame.data[0] | (rx_frame.data[1] << 8);   // Assuming cellbal_states is a 16-bit value
+            packingMaskCellBalState(ams.cellbal_states[slave_index]);                       // Update cellbal_active and cellbal_odd based on the received data
             ams.cell_voltages[slave_index][0] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming cell_voltages is a 16-bit value
             ams.cell_voltages[slave_index][1] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming cell_voltages is a 16-bit value
             ams.cell_voltages[slave_index][2] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
@@ -65,19 +82,37 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
 
     else if (rx_frame.can_id < MCP2515_MASTER_ADDRESS && rx_frame.can_id >= MCP2515_PANIC_ADDRESS)
     {
+        uint8_t buffer_index = rx_frame.can_id - MCP2515_PANIC_ADDRESS; // Calculate the buffer index based on the CAN ID
+        uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;           // Extract the slave index from the CAN ID
         ams.fault_active = true;
+        ams.fault_slave = slave_index;
+        ams.fault_flags = rx_frame.data[0]; // Assuming fault_flags is a 8-bit value
     }
 }
 
 bool CanHelper::isCommunicationTimeout()
 {
     uint32_t current_time = millis();
-    for (uint8_t i = 0; i < NUM_SLAVE * NUM_SLAVE_FRAME; ++i)
+    for (uint8_t buffer_index = 0; buffer_index < NUM_SLAVE * NUM_SLAVE_FRAME; ++buffer_index)
     {
-        if (current_time - rx_slave_buffer[i].timestamp > COMMUNICATION_TIMEOUT_MAX)
+        if (current_time - rx_slave_buffer[buffer_index].timestamp > CAN_TIMEOUT_MAX)
         {
-            return true; // Communication timeout occurred
+            uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME; // Extract the slave index from the CAN ID
+            ams.fault_active = true;
+            ams.fault_slave = slave_index;
+            ams.fault_flags |= CAN_TIMEOUT_FAULT_BIT;
+            return true; // Communication timeout detected
         }
     }
     return false; // No communication timeout
+}
+
+void CanHelper::sendSlaveData(uint8_t index)
+{
+    // Implementation of the sendSlaveData function
+    // This function will handle sending data to the slaves via CAN
+
+    uint16_t address = MCP2515_MASTER_ADDRESS + index;
+    
+    
 }

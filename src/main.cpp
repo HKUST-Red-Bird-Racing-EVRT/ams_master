@@ -35,4 +35,15 @@ void loop()
   {
     can_helper.packSlaveData(rx_slave_frame);
   }
+
+  if (millis() >= TIME_SETUP)
+  {
+    
+    if (!can_helper.isCommunicationTimeout())
+    {
+      ams_helper.updateMinCellVoltages();
+    }
+    
+  }
+
 }

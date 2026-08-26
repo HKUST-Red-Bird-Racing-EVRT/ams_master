@@ -20,7 +20,7 @@
 #define NUM_SLAVE 10
 #define NUM_SLAVE_FRAME 5
 
-#define COMMUNICATION_TIMEOUT_MAX 500
+#define CAN_TIMEOUT_MAX 500
 
 struct BufferData
 {
@@ -32,8 +32,10 @@ class CanHelper {
     public:
         CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_);
         CanHelper() = delete; // Delete the default constructor to prevent its use
+        void packingMaskCellBalState(uint16_t &flag);
         void packSlaveData(can_frame &rx_frame);
         bool isCommunicationTimeout();
+        void sendSlaveData(uint8_t index);
 
     private:
         MCP2515 &can_slave;
