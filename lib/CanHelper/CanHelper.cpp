@@ -26,6 +26,7 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
 {
     // Implementation of the packSlaveData function
     // This function will handle the packing of slave data into CAN frames
+    // It will receive a CAN frame and store it in the appropriate buffer
 
     if (rx_frame.can_id >= MCP2515_SLAVE_ADDRESS)
     {

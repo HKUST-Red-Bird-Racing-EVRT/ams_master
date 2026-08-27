@@ -45,4 +45,9 @@ class CanHelper {
 
 };
 
+//  Master Command Byte bits
+#define MASTERCMD_DISCHARGE_STATE_BIT   0x01
+#define MASTERCMD_CELLBAL_STATE_BIT     0x02
+#define MASTERCMD_CELLBAL_ODD_BIT       0x04
+
 #endif // CANHELPER_HPP
