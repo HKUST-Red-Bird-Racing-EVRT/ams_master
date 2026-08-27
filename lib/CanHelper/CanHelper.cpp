@@ -113,6 +113,13 @@ void CanHelper::sendSlaveData(uint8_t index)
     // This function will handle sending data to the slaves via CAN
 
     uint16_t address = MCP2515_MASTER_ADDRESS + index;
-    
+
+    can_frame send_frame = {
+        address, // CAN ID for the slave
+        8,       // Data length code (DLC)
+        {0}      // Initialize data to zero
+    };
+
+    can_slave.sendMessage(&send_frame); // Send the CAN frame to the slave
     
 }
