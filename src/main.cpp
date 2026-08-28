@@ -11,8 +11,8 @@
 #include "AmsHelper.hpp"
 #include "CanHelper.hpp"
 
-MCP2515 can_slave(CAN0_CS);
-MCP2515 mcp2515_1(CAN1_CS);
+MCP2515 can_slave(PIN_CAN0_CS);
+MCP2515 mcp2515_1(PIN_CAN1_CS);
 can_frame rx_slave_frame;
 
 AmsState ams;
@@ -27,8 +27,10 @@ void setup()
 	can_slave.setBitrate(CAN_500KBPS, MCP_20MHZ);
 	can_slave.setNormalMode();
 
-  pinMode(CAN0_CS, OUTPUT);
-  pinMode(CAN1_CS, OUTPUT);
+  pinMode(PIN_CAN0_CS, OUTPUT);
+  pinMode(PIN_CAN1_CS, OUTPUT);
+  pinMode(PIN_INT_0, INPUT);
+  pinMode(PIN_INT_1, INPUT);
 
   delay(1000); // Wait for 1 second before starting the loop
 }
@@ -40,7 +42,10 @@ void loop()
   /*
   Later Implementation:
   - Master send command byte to slave
-  - Before receiving data from slave, communicate with vcu first
+  - Before receiving data from slave, handle cell balancing odd/even states
+  - Put recieved data into buffer, and update timestamp
+  - If timeout, set fault flag and fault slave
+  - If no timeout, communicate with vcu
   */
 
   if (can_slave.readMessage(&rx_slave_frame) == MCP2515::ERROR_OK)
@@ -51,7 +56,7 @@ void loop()
   if (millis() >= TIME_SETUP)
   {
     
-    if (!can_helper.isCommunicationTimeout())
+    if (!can_helper.isCommunicationTimeoutOld())
     {
       ams_helper.updateMinCellVoltages();
     }

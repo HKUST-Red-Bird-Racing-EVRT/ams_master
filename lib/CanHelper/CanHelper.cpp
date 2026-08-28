@@ -6,7 +6,8 @@ CanHelper::CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_)
     // Constructor implementation
 }
 
-void CanHelper::packingMaskCellBalState(uint16_t &flag) {
+void CanHelper::packingMaskCellBalState(uint16_t &flag)
+{
     if (flag & CELLBAL_STATE_BIT)
     {
         ams.cellbal_active = true;
@@ -18,6 +19,62 @@ void CanHelper::packingMaskCellBalState(uint16_t &flag) {
         else
         {
             flag &= CELLBAL_EVEN_MASK; // Clear odd bits, keep even bits
+        }
+    }
+}
+
+void CanHelper::drainCanBuffer()
+{
+    // Implementation of the drainCanBuffer function
+    // This function will clear the CAN buffer and reset the timestamps
+    if (digitalRead(PIN_INT_0) == HIGH)
+    {
+        return; // No messages to read, exit the function
+    }
+
+    uint8_t expected_buffer_index;           // Expected slave index for the first frame
+    can_frame buffer[NUM_SLAVE_FRAME] = {0}; // Temporary buffer to store received frames
+
+    while (digitalRead(PIN_INT_0) == LOW)
+    {
+        can_frame frame;
+        if (can_slave.readMessage(&frame) == MCP2515::ERROR_OK)
+        {
+            // Read and discard messages until the buffer is empty
+            if (frame.can_id >= MCP2515_SLAVE_ADDRESS)
+            {
+                uint8_t buffer_index = frame.can_id - MCP2515_SLAVE_ADDRESS; // Calculate the buffer index based on the CAN ID
+                uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;        // Extract the slave index from the CAN ID
+                uint8_t slave_frame = buffer_index % NUM_SLAVE_FRAME;        // Extract the slave frame index from the CAN ID
+
+                if (slave_frame == 0)
+                {
+                    if (!isDelayedFrame(frame))
+                    {
+                        expected_buffer_index = buffer_index; // Store the expected slave index for the first frame
+                        memset(buffer, 0, sizeof(buffer));    // Clear the temporary buffer
+                    }
+                }
+                else
+                {
+                    ++expected_buffer_index; // Increment the expected slave index for subsequent frames
+                }
+
+                if (buffer_index != expected_buffer_index)
+                {
+                    continue; // Skip frames that are not in the expected order
+                }
+
+                buffer[slave_frame] = frame; // Store the received frame in the temporary buffer
+
+                if (slave_frame == NUM_SLAVE_FRAME - 1)
+                {
+                    for (uint8_t i = 0; i < NUM_SLAVE_FRAME; ++i)
+                    {
+                        packSlaveData(buffer[i]); // Pack the received frames into the appropriate places
+                    }
+                }
+            }
         }
     }
 }
@@ -35,45 +92,45 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
         uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;           // Extract the slave index from the CAN ID
         uint8_t slave_frame = buffer_index % NUM_SLAVE_FRAME;           // Extract the slave frame index from the CAN ID
 
-        rx_slave_buffer[buffer_index].frame = rx_frame;     // Store the received frame in the buffer
-        rx_slave_buffer[buffer_index].timestamp = millis(); // Store the timestamp of when the frame was received
-
         switch (slave_frame)
         {
-        case 0:
-            ams.cellbal_states[slave_index] = rx_frame.data[0] | (rx_frame.data[1] << 8);   // Assuming cellbal_states is a 16-bit value
-            packingMaskCellBalState(ams.cellbal_states[slave_index]);                       // Update cellbal_active and cellbal_odd based on the received data
-            ams.cell_voltages[slave_index][0] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][1] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][2] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
+        case 0x00:
+            ams.command_flags = rx_frame.data[0];                                         // Assuming command_flags is a 8-bit value
+            ams.cellbal_states[slave_index] = rx_frame.data[1] | (rx_frame.data[2] << 8); // Assuming cellbal_states is a 16-bit value
             break;
 
-        case 1:
-            ams.cell_voltages[slave_index][3] = rx_frame.data[0] | (rx_frame.data[1] << 8); // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][4] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][5] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][6] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
+        case 0x01:
+            ams.cell_voltages[slave_index][0] = rx_frame.data[0] | (rx_frame.data[1] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][1] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][2] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][3] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
             break;
 
-        case 2:
-            ams.cell_voltages[slave_index][7] = rx_frame.data[0] | (rx_frame.data[1] << 8);  // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][8] = rx_frame.data[2] | (rx_frame.data[3] << 8);  // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][9] = rx_frame.data[4] | (rx_frame.data[5] << 8);  // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][10] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
+        case 0x02:
+            ams.cell_voltages[slave_index][4] = rx_frame.data[0] | (rx_frame.data[1] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][5] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][6] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][7] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
             break;
 
-        case 3:
-            ams.cell_voltages[slave_index][11] = rx_frame.data[0] | (rx_frame.data[1] << 8);   // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][12] = rx_frame.data[2] | (rx_frame.data[3] << 8);   // Assuming cell_voltages is a 16-bit value
-            ams.cell_voltages[slave_index][13] = rx_frame.data[4] | (rx_frame.data[5] << 8);   // Assuming cell_voltages is a 16-bit value
-            ams.ntc_temperatures[slave_index][0] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming ntc_temperatures is a 16-bit value
+        case 0x03:
+            ams.cell_voltages[slave_index][8] = rx_frame.data[0] | (rx_frame.data[1] << 8);  // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][9] = rx_frame.data[2] | (rx_frame.data[3] << 8);  // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][10] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][11] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming cell_voltages is a 16-bit value
             break;
 
-        case 4:
-            ams.ntc_temperatures[slave_index][1] = rx_frame.data[0] | (rx_frame.data[1] << 8); // Assuming ntc_temperatures is a 16-bit value
-            ams.ntc_temperatures[slave_index][2] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming ntc_temperatures is a 16-bit value
-            ams.ntc_temperatures[slave_index][3] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming ntc_temperatures is a 16-bit value
-            ams.ntc_temperatures[slave_index][4] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming ntc_temperatures is a 16-bit value
+        case 0x04:
+            ams.cell_voltages[slave_index][12] = rx_frame.data[0] | (rx_frame.data[1] << 8);   // Assuming cell_voltages is a 16-bit value
+            ams.cell_voltages[slave_index][13] = rx_frame.data[2] | (rx_frame.data[3] << 8);   // Assuming cell_voltages is a 16-bit value
+            ams.ntc_temperatures[slave_index][0] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming ntc_temperatures is a 16-bit value
+            ams.ntc_temperatures[slave_index][1] = rx_frame.data[6] | (rx_frame.data[7] << 8); // Assuming ntc_temperatures is a 16-bit valuE
+            break;
+
+        case 0x05:
+            ams.ntc_temperatures[slave_index][2] = rx_frame.data[0] | (rx_frame.data[1] << 8); // Assuming ntc_temperatures is a 16-bit value
+            ams.ntc_temperatures[slave_index][3] = rx_frame.data[2] | (rx_frame.data[3] << 8); // Assuming ntc_temperatures is a 16-bit value
+            ams.ntc_temperatures[slave_index][4] = rx_frame.data[4] | (rx_frame.data[5] << 8); // Assuming ntc_temperatures is a 16-bit value
             break;
 
         default:
@@ -91,7 +148,7 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
     }
 }
 
-bool CanHelper::isCommunicationTimeout()
+bool CanHelper::isCommunicationTimeoutOld()
 {
     uint32_t current_time = millis();
     for (uint8_t buffer_index = 0; buffer_index < NUM_SLAVE * NUM_SLAVE_FRAME; ++buffer_index)
@@ -108,6 +165,13 @@ bool CanHelper::isCommunicationTimeout()
     return false; // No communication timeout
 }
 
+bool CanHelper::isDelayedFrame(can_frame &frame)
+{
+    uint8_t frame_masked = frame.data[0] & SEQUENCE_TOGGLE_BIT;             // Mask the command byte to check the sequence toggle bit
+    uint8_t command_flags_masked = ams.command_flags & SEQUENCE_TOGGLE_BIT; // Mask the command byte to check the sequence toggle bit
+    return frame_masked != command_flags_masked;                            // Check if the sequence toggle bit matches
+}
+
 void CanHelper::sendSlaveData(uint8_t index)
 {
     // Implementation of the sendSlaveData function
@@ -122,5 +186,4 @@ void CanHelper::sendSlaveData(uint8_t index)
     };
 
     can_slave.sendMessage(&send_frame); // Send the CAN frame to the slave
-    
 }

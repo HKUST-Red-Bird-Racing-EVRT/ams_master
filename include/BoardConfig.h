@@ -1,8 +1,11 @@
 #ifndef BOARDCONFIG_H
 #define BOARDCONFIG_H
 
-#define CAN0_CS PIN_PB1
-#define CAN1_CS PIN_PB2
+#define PIN_CAN0_CS PIN_PB1
+#define PIN_CAN1_CS PIN_PB2
+
+#define PIN_INT_0 PIN_PD2
+#define PIN_INT_1 PIN_PD3
 
 
 #endif // BOARDCONFIG_H
