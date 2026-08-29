@@ -63,4 +63,22 @@ void loop()
     
   }
 
+  for (uint8_t slave_index = 0; slave_index < NUM_SLAVE; ++slave_index)
+  {
+    // if frame dropped, keep looping for 3-4 times to request the slave data again, and drain the buffer
+    uint8_t retry_count = 0;
+    while (retry_count < 4)
+    {
+      can_helper.requestSlaveData(slave_index);
+      can_helper.drainCanBuffer();
+      if (can_helper.isCommunicationTimeoutOld())
+      {
+        retry_count++;
+      }
+      else
+      {
+        break;
+      }
+    }
+  }
 }

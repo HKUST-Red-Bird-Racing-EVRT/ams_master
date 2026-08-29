@@ -29,6 +29,7 @@ class CanHelper {
         CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_);
         CanHelper() = delete; // Delete the default constructor to prevent its use
         void packingMaskCellBalState(uint16_t &flag);
+        void requestSlaveData(uint8_t frame_index);
         void drainCanBuffer();
         void packSlaveData(can_frame &rx_frame);
         bool isCommunicationTimeoutOld();

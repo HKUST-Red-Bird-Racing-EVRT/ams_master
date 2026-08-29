@@ -23,6 +23,21 @@ void CanHelper::packingMaskCellBalState(uint16_t &flag)
     }
 }
 
+void CanHelper::requestSlaveData(uint8_t frame_index)
+{
+    // Implementation of the requestSlaveData function
+    // This function will send a request to the slave to send its data
+    uint16_t address = MCP2515_MASTER_ADDRESS + frame_index * 0x10; // Calculate the CAN ID for the specific slave
+
+    can_frame request_frame = {
+        address, // CAN ID for the slave
+        1,       // Data length code (DLC)
+        0x00     // Command byte to request data from the slave
+    };
+
+    can_slave.sendMessage(&request_frame); // Send the CAN frame to the slave
+}
+
 void CanHelper::drainCanBuffer()
 {
     // Implementation of the drainCanBuffer function
@@ -32,8 +47,11 @@ void CanHelper::drainCanBuffer()
         return; // No messages to read, exit the function
     }
 
-    uint8_t expected_buffer_index;           // Expected slave index for the first frame
+    uint8_t expected_slave_index;           // Expected slave index for the first frame
     can_frame buffer[NUM_SLAVE_FRAME] = {0}; // Temporary buffer to store received frames
+
+    while (digitalRead(PIN_INT_0) == HIGH)
+        ;
 
     while (digitalRead(PIN_INT_0) == LOW)
     {
@@ -44,25 +62,25 @@ void CanHelper::drainCanBuffer()
             if (frame.can_id >= MCP2515_SLAVE_ADDRESS)
             {
                 uint8_t buffer_index = frame.can_id - MCP2515_SLAVE_ADDRESS; // Calculate the buffer index based on the CAN ID
-                uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;        // Extract the slave index from the CAN ID
-                uint8_t slave_frame = buffer_index % NUM_SLAVE_FRAME;        // Extract the slave frame index from the CAN ID
+                uint8_t slave_frame = buffer_index / 0x10;                   // Extract the slave frame index from the CAN ID
+                uint8_t slave_index = buffer_index - slave_frame * 0x10;     // Extract the slave index from the CAN ID
 
                 if (slave_frame == 0)
                 {
                     if (!isDelayedFrame(frame))
                     {
-                        expected_buffer_index = buffer_index; // Store the expected slave index for the first frame
+                        expected_slave_index = slave_index; // Store the expected slave index for the first frame
                         memset(buffer, 0, sizeof(buffer));    // Clear the temporary buffer
                     }
                 }
                 else
                 {
-                    ++expected_buffer_index; // Increment the expected slave index for subsequent frames
+                    ++expected_slave_index; // Increment the expected slave index for subsequent frames
                 }
 
-                if (buffer_index != expected_buffer_index)
+                if (slave_index != expected_slave_index)    //  Check if the received frame is in the expected order, false means frame dropped
                 {
-                    continue; // Skip frames that are not in the expected order
+                    continue;
                 }
 
                 buffer[slave_frame] = frame; // Store the received frame in the temporary buffer
@@ -89,8 +107,8 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
     {
 
         uint8_t buffer_index = rx_frame.can_id - MCP2515_SLAVE_ADDRESS; // Calculate the buffer index based on the CAN ID
-        uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;           // Extract the slave index from the CAN ID
-        uint8_t slave_frame = buffer_index % NUM_SLAVE_FRAME;           // Extract the slave frame index from the CAN ID
+        uint8_t slave_frame = buffer_index / 0x10;                   // Extract the slave frame index from the CAN ID
+        uint8_t slave_index = buffer_index - slave_frame * 0x10;     // Extract the slave index from the CAN ID
 
         switch (slave_frame)
         {
@@ -141,7 +159,8 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
     else if (rx_frame.can_id < MCP2515_MASTER_ADDRESS && rx_frame.can_id >= MCP2515_PANIC_ADDRESS)
     {
         uint8_t buffer_index = rx_frame.can_id - MCP2515_PANIC_ADDRESS; // Calculate the buffer index based on the CAN ID
-        uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;           // Extract the slave index from the CAN ID
+        uint8_t slave_frame = buffer_index / 0x10;                   // Extract the slave frame index from the CAN ID
+        uint8_t slave_index = buffer_index - slave_frame * 0x10;     // Extract the slave index from the CAN ID
         ams.fault_active = true;
         ams.fault_slave = slave_index;
         ams.fault_flags = rx_frame.data[0]; // Assuming fault_flags is a 8-bit value
@@ -167,8 +186,9 @@ bool CanHelper::isCommunicationTimeoutOld()
 
 bool CanHelper::isDelayedFrame(can_frame &frame)
 {
-    uint8_t buffer_index = frame.can_id - MCP2515_SLAVE_ADDRESS; // Calculate the buffer index based on the CAN ID
-    uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;        // Extract the slave index from the CAN ID
+    uint8_t buffer_index = frame.can_id - MCP2515_SLAVE_ADDRESS;            // Calculate the buffer index based on the CAN ID
+    uint8_t slave_frame = buffer_index / 0x10;                              // Extract the slave frame index from the CAN ID
+    uint8_t slave_index = buffer_index - slave_frame * 0x10;                // Extract the slave index from the CAN ID
     uint8_t frame_masked = frame.data[0] & SEQUENCE_TOGGLE_BIT;             // Mask the command byte to check the sequence toggle bit
     uint8_t command_flags_masked = ams.command_flags[slave_index] & SEQUENCE_TOGGLE_BIT; // Mask the command byte to check the sequence toggle bit
     return frame_masked != command_flags_masked;                            // Check if the sequence toggle bit matches
@@ -179,7 +199,7 @@ void CanHelper::sendSlaveData(uint8_t index)
     // Implementation of the sendSlaveData function
     // This function will handle sending data to the slaves via CAN
 
-    uint16_t address = MCP2515_MASTER_ADDRESS + index;
+    uint16_t address = MCP2515_MASTER_ADDRESS + index; // Calculate the CAN ID for the specific slave
 
     can_frame send_frame = {
         address, // CAN ID for the slave
