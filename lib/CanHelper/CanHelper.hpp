@@ -2,6 +2,7 @@
 #define CANHELPER_HPP
 
 #include "AmsState.hpp"
+#include "AmsHelper.hpp"
 #include "BoardConfig.h"
 
 #include <stdint.h>
@@ -25,7 +26,7 @@
 
 class CanHelper {
     public:
-        CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_);
+        CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_);
         CanHelper() = delete; // Delete the default constructor to prevent its use
         void packingMaskCellBalState(uint16_t &flag);
         void drainCanBuffer();
@@ -38,7 +39,7 @@ class CanHelper {
         MCP2515 &can_slave;
         MCP2515 &mcp2515_1;
         AmsState &ams;
-
+        AmsHelper &ams_helper;
 };
 
 //  Master Command Byte bits

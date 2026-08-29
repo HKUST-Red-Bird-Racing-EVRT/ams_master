@@ -25,7 +25,7 @@ struct AmsState
     uint16_t cellbal_states[NUM_SLAVE];
     uint8_t fault_slave;
     uint8_t fault_flags;
-    uint8_t command_flags;
+    uint8_t command_flags[NUM_SLAVE];
 
 };
 

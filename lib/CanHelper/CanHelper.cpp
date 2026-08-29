@@ -1,7 +1,7 @@
 #include "CanHelper.hpp"
 
-CanHelper::CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_)
-    : can_slave(can_slave_), mcp2515_1(mcp2515_1_), ams(ams_)
+CanHelper::CanHelper(MCP2515 &can_slave_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_)
+    : can_slave(can_slave_), mcp2515_1(mcp2515_1_), ams(ams_), ams_helper(ams_helper_)
 {
     // Constructor implementation
 }
@@ -95,7 +95,7 @@ void CanHelper::packSlaveData(can_frame &rx_frame)
         switch (slave_frame)
         {
         case 0x00:
-            ams.command_flags = rx_frame.data[0];                                         // Assuming command_flags is a 8-bit value
+            ams.command_flags[slave_index] = rx_frame.data[0];                                         // Assuming command_flags is a 8-bit value
             ams.cellbal_states[slave_index] = rx_frame.data[1] | (rx_frame.data[2] << 8); // Assuming cellbal_states is a 16-bit value
             break;
 
@@ -167,8 +167,10 @@ bool CanHelper::isCommunicationTimeoutOld()
 
 bool CanHelper::isDelayedFrame(can_frame &frame)
 {
+    uint8_t buffer_index = frame.can_id - MCP2515_SLAVE_ADDRESS; // Calculate the buffer index based on the CAN ID
+    uint8_t slave_index = buffer_index / NUM_SLAVE_FRAME;        // Extract the slave index from the CAN ID
     uint8_t frame_masked = frame.data[0] & SEQUENCE_TOGGLE_BIT;             // Mask the command byte to check the sequence toggle bit
-    uint8_t command_flags_masked = ams.command_flags & SEQUENCE_TOGGLE_BIT; // Mask the command byte to check the sequence toggle bit
+    uint8_t command_flags_masked = ams.command_flags[slave_index] & SEQUENCE_TOGGLE_BIT; // Mask the command byte to check the sequence toggle bit
     return frame_masked != command_flags_masked;                            // Check if the sequence toggle bit matches
 }
 
@@ -182,7 +184,10 @@ void CanHelper::sendSlaveData(uint8_t index)
     can_frame send_frame = {
         address, // CAN ID for the slave
         8,       // Data length code (DLC)
-        {0}      // Initialize data to zero
+        ams.command_flags[index], // Command flags for the specific slave
+        ams_helper.voltage_min & 0xFF, // Lower byte of voltage_min
+        (ams_helper.voltage_min >> 8) & 0xFF, // Upper byte of voltage_min
+        0, 0, 0, 0 // Reserved bytes
     };
 
     can_slave.sendMessage(&send_frame); // Send the CAN frame to the slave
