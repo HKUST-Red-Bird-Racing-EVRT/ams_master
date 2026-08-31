@@ -11,21 +11,37 @@
 #include "AmsHelper.hpp"
 #include "CanHelper.hpp"
 
-MCP2515 can_slave(PIN_CAN0_CS);
+MCP2515 can_internal(PIN_CAN0_CS);
 MCP2515 mcp2515_1(PIN_CAN1_CS);
 can_frame rx_slave_frame;
 
 AmsState ams;
 AmsHelper ams_helper(ams);
-CanHelper can_helper(can_slave, mcp2515_1, ams);
+CanHelper can_helper(can_internal, mcp2515_1, ams, ams_helper);
 
 void setup()
 {
   // put your setup code here, to run once:
 
-  can_slave.reset();
-	can_slave.setBitrate(CAN_500KBPS, MCP_20MHZ);
-	can_slave.setNormalMode();
+  can_internal.reset();
+  can_internal.setBitrate(CAN_500KBPS, MCP_20MHZ);
+  can_internal.setConfigMode();
+
+  // BUFFER 0 Setup: Covers 0x100 to 0x200
+  // MASK0 = 0x700 (Checks top 3 bits: 0b111 0000 0000)
+  can_internal.setFilterMask(MCP2515::MASK0, false, 0x700);
+
+  // RXF0: Accepts 0x100 to 0x1FF (Top 3 bits match 0b001)
+  can_internal.setFilter(MCP2515::RXF0, false, 0x100);
+
+  // BUFFER 1 Setup: Covers 0x300 to 0x400
+  // MASK1 = 0x700 (Checks top 3 bits: 0b111 0000 0000)
+  can_internal.setFilterMask(MCP2515::MASK1, false, 0x700);
+
+  // RXF2: Accepts 0x300 to 0x3FF (Top 3 bits match 0b011)
+  can_internal.setFilter(MCP2515::RXF2, false, 0x300);
+
+  can_internal.setNormalMode();
 
   pinMode(PIN_CAN0_CS, OUTPUT);
   pinMode(PIN_CAN1_CS, OUTPUT);
@@ -48,19 +64,9 @@ void loop()
   - If no timeout, communicate with vcu
   */
 
-  if (can_slave.readMessage(&rx_slave_frame) == MCP2515::ERROR_OK)
+  if (!can_helper.isCommunicationTimeoutOld())
   {
-    can_helper.packSlaveData(rx_slave_frame);
-  }
-
-  if (millis() >= TIME_SETUP)
-  {
-    
-    if (!can_helper.isCommunicationTimeoutOld())
-    {
-      ams_helper.updateMinCellVoltages();
-    }
-    
+    ams_helper.updateMaxMinCellVoltages();
   }
 
   for (uint8_t slave_index = 0; slave_index < NUM_SLAVE; ++slave_index)
