@@ -24,6 +24,8 @@ struct AmsState
     uint16_t voltage_min; // Minimum voltage in millivolts
     uint16_t voltage_max; // Maximum voltage in millivolts
     uint16_t ntc_temperatures[NUM_SLAVE][NUM_NTC];
+    uint16_t temperature_min; 
+    uint16_t temperature_max;
     uint16_t cellbal_states[NUM_SLAVE];
     uint8_t fault_slave;
     uint8_t fault_flags;

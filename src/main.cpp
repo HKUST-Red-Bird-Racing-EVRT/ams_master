@@ -9,7 +9,7 @@
 #include "BoardConfig.h"
 #include "AmsState.hpp"
 #include "AmsHelper.hpp"
-#include "CanHelper.hpp"
+#include "CanInternalHelper.hpp"
 
 MCP2515 can_internal(PIN_CAN0_CS);
 MCP2515 mcp2515_1(PIN_CAN1_CS);
@@ -17,7 +17,7 @@ can_frame rx_slave_frame;
 
 AmsState ams;
 AmsHelper ams_helper(ams);
-CanHelper can_helper(can_internal, mcp2515_1, ams, ams_helper);
+CanInternalHelper can_internal_helper(can_internal, mcp2515_1, ams, ams_helper);
 
 void setup()
 {
@@ -47,8 +47,6 @@ void setup()
   pinMode(PIN_CAN1_CS, OUTPUT);
   pinMode(PIN_INT_0, INPUT);
   pinMode(PIN_INT_1, INPUT);
-
-  delay(1000); // Wait for 1 second before starting the loop
 }
 
 void loop()
@@ -64,27 +62,34 @@ void loop()
   - If no timeout, communicate with vcu
   */
 
-  if (!can_helper.isCommunicationTimeoutOld())
-  {
-    ams_helper.updateMaxMinCellVoltages();
-  }
-
-  for (uint8_t slave_index = 0; slave_index < NUM_SLAVE; ++slave_index)
+  for (uint8_t frame_index = 0; frame_index < NUM_SLAVE_FRAME; ++frame_index)
   {
     // if frame dropped, keep looping for 3-4 times to request the slave data again, and drain the buffer
     uint8_t retry_count = 0;
     while (retry_count < 4)
     {
-      can_helper.requestSlaveData(slave_index);
-      can_helper.drainCanBuffer();
-      if (can_helper.isCommunicationTimeoutOld())
+      can_internal_helper.requestSlaveData(frame_index);
+      can_internal_helper.drainCanBuffer();
+      if (ams.fault_flags & CAN_TIMEOUT_FAULT_BIT)
       {
         retry_count++;
       }
       else
       {
+        ams.fault_flags &= ~CAN_TIMEOUT_FAULT_BIT; // Clear the CAN timeout fault flag if no timeout occurred
         break;
       }
     }
+  }
+
+  if (ams.fault_flags)
+  {
+    // Handle fault condition, e.g., log the fault, notify the user, etc.
+  }
+  else
+  {
+    // Normal operation, e.g., send data to VCU, perform other tasks, etc.
+    ams_helper.updateMaxMinCellVoltages();
+    ams_helper.updateMaxMinTemperatures();
   }
 }

@@ -14,6 +14,7 @@ class AmsHelper {
         AmsHelper() = delete; // Delete the default constructor to prevent its use
         void resetCellBal();
         void updateMaxMinCellVoltages();
+        void updateMaxMinTemperatures();
 
     private:
         AmsState &ams;

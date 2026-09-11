@@ -1,5 +1,5 @@
-#ifndef CANHELPER_HPP
-#define CANHELPER_HPP
+#ifndef CAN_INTERNAL_HELPER_HPP
+#define CAN_INTERNAL_HELPER_HPP
 
 #include "AmsState.hpp"
 #include "AmsHelper.hpp"
@@ -39,16 +39,16 @@ frame 0: 0x30x, frame 1: 0x31x, frame 2: 0x32x, ..., frame 5: 0x35x
 
 #define CAN_TIMEOUT_MAX 500
 
-class CanHelper
+class CanInternalHelper
 {
 public:
-    CanHelper(MCP2515 &can_internal_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_);
-    CanHelper() = delete; // Delete the default constructor to prevent its use
+    CanInternalHelper(MCP2515 &can_internal_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_);
+    CanInternalHelper() = delete; // Delete the default constructor to prevent its use
     void packingMaskCellBalState(uint16_t &flag);
     void requestSlaveData(uint8_t frame_index);
     void drainCanBuffer();
     void packSlaveData(can_frame &rx_frame);
-    bool isCommunicationTimeoutOld();
+    // bool isCommunicationTimeoutOld();
     bool isDelayedFrame(can_frame &frame);
     void sendSlaveRequest(uint8_t slave_index);
     void sendSlaveCommand(uint8_t slave_index);
@@ -66,4 +66,4 @@ private:
 #define MASTERCMD_CELLBAL_ODD_BIT 0x04
 #define MASTERCMD_SEQTOGGLE_BIT 0x08
 
-#endif // CANHELPER_HPP
+#endif // CAN_INTERNAL_HELPER_HPP
