@@ -1,7 +1,6 @@
 #ifndef AMSHELPER_HPP
 #define AMSHELPER_HPP
 
-#include <stdint.h>
 #include "AmsState.hpp"
 
 #define TIME_SETUP 1000

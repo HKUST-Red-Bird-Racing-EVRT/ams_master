@@ -3,12 +3,6 @@
 
 #include <stdint.h>
 
-// ignore -Wpedantic warnings for mcp2515.h
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wpedantic"
-#include <mcp2515.h>
-#pragma GCC diagnostic pop
-
 #define NUM_SLAVE 10
 #define NUM_VCELL 14
 #define NUM_NTC 5

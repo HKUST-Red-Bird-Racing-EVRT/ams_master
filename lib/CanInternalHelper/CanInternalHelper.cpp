@@ -145,7 +145,6 @@ void CanInternalHelper::packSlaveData(can_frame &rx_frame)
     else if (rx_frame.can_id < CAN_INTERNAL_MASTER_COMMAND_ADDRESS && rx_frame.can_id >= CAN_INTERNAL_PANIC_ADDRESS)
     {
         uint8_t buffer_index = rx_frame.can_id - CAN_INTERNAL_PANIC_ADDRESS; // Calculate the buffer index based on the CAN ID
-        uint8_t slave_frame = buffer_index / 0x10;                   // Extract the slave frame index from the CAN ID
         uint8_t slave_index = buffer_index % 0x10;     // Extract the slave index from the CAN ID
         ams.fault_active = true;
         ams.fault_slave = slave_index;
