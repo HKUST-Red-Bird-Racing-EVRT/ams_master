@@ -1,7 +1,7 @@
 #include "CanInternalHelper.hpp"
 
-CanInternalHelper::CanInternalHelper(MCP2515 &can_internal_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_)
-    : can_internal(can_internal_), mcp2515_1(mcp2515_1_), ams(ams_), ams_helper(ams_helper_)
+CanInternalHelper::CanInternalHelper(MCP2515 &can_internal_, AmsState &ams_, AmsHelper &ams_helper_)
+    : can_internal(can_internal_), ams(ams_), ams_helper(ams_helper_)
 {
     // Constructor implementation
 }

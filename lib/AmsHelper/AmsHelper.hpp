@@ -2,6 +2,8 @@
 #define AMSHELPER_HPP
 
 #include "AmsState.hpp"
+#include "BoardConfig.h"
+#include <Arduino.h>
 
 #define TIME_SETUP 1000
 #define DEFAULT_VOLTAGE_MAX 4250
@@ -14,6 +16,8 @@ class AmsHelper {
         void resetCellBal();
         void updateMaxMinCellVoltages();
         void updateMaxMinTemperatures();
+        void updateBatterySOC(int8_t hall_lo, int8_t hall_hi);
+        void updateAIR(AIRState new_state);
 
     private:
         AmsState &ams;

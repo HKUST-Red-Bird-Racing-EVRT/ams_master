@@ -42,7 +42,7 @@ frame 0: 0x30x, frame 1: 0x31x, frame 2: 0x32x, ..., frame 5: 0x35x
 class CanInternalHelper
 {
 public:
-    CanInternalHelper(MCP2515 &can_internal_, MCP2515 &mcp2515_1_, AmsState &ams_, AmsHelper &ams_helper_);
+    CanInternalHelper(MCP2515 &can_internal_, AmsState &ams_, AmsHelper &ams_helper_);
     CanInternalHelper() = delete; // Delete the default constructor to prevent its use
     void packingMaskCellBalState(uint16_t &flag);
     void requestSlaveData(uint8_t frame_index);
@@ -55,7 +55,6 @@ public:
 
 private:
     MCP2515 &can_internal;
-    MCP2515 &mcp2515_1;
     AmsState &ams;
     AmsHelper &ams_helper;
 };

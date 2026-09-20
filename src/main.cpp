@@ -10,14 +10,16 @@
 #include "AmsState.hpp"
 #include "AmsHelper.hpp"
 #include "CanInternalHelper.hpp"
+#include "CanExternalHelper.hpp"
 
 MCP2515 can_internal(PIN_CAN0_CS);
-MCP2515 mcp2515_1(PIN_CAN1_CS);
+MCP2515 can_external(PIN_CAN1_CS);
 can_frame rx_slave_frame;
 
 AmsState ams;
 AmsHelper ams_helper(ams);
-CanInternalHelper can_internal_helper(can_internal, mcp2515_1, ams, ams_helper);
+CanInternalHelper can_internal_helper(can_internal, ams, ams_helper);
+CanExternalHelper can_external_helper(can_external, ams, ams_helper);
 
 void setup()
 {
@@ -43,10 +45,24 @@ void setup()
 
   can_internal.setNormalMode();
 
+  can_external.reset();
+  can_external.setBitrate(CAN_500KBPS, MCP_20MHZ);
+  can_external.setNormalMode();
+
   pinMode(PIN_CAN0_CS, OUTPUT);
   pinMode(PIN_CAN1_CS, OUTPUT);
   pinMode(PIN_INT_0, INPUT);
   pinMode(PIN_INT_1, INPUT);
+  pinMode(PIN_HALL_LO, INPUT);
+  pinMode(PIN_HALL_HI, INPUT);
+  pinMode(PIN_AIR_NEG, OUTPUT);
+  pinMode(PIN_AIR_POS, OUTPUT);
+  pinMode(PIN_AIR_PRE, OUTPUT);
+  pinMode(PIN_AMS_ERR, OUTPUT);
+
+  can_external_helper.setHost(); // Determine if the host is VCU or CHARGER
+  // Initialize the AIR state to INIT (Wait VCU command)
+  ams_helper.updateAIR(AIRState::INIT); // Initialize the AIR state
 }
 
 void loop()
@@ -91,5 +107,6 @@ void loop()
     // Normal operation, e.g., send data to VCU, perform other tasks, etc.
     ams_helper.updateMaxMinCellVoltages();
     ams_helper.updateMaxMinTemperatures();
+    ams_helper.updateBatterySOC(analogRead(PIN_HALL_LO), analogRead(PIN_HALL_HI));
   }
 }

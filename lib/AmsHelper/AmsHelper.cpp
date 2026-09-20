@@ -48,3 +48,35 @@ void AmsHelper::updateMaxMinTemperatures() {
     ams.temperature_min = temperature_min;
     ams.temperature_max = temperature_max;
 }
+
+void AmsHelper::updateBatterySOC(int8_t hall_lo, int8_t hall_hi) {
+    ams.coulomb_count = hall_hi - hall_lo; // Calculate the coulomb count based on hall sensor readings
+    // TODO: Implement a more accurate SOC calculation based on coulomb count and battery capacity
+}
+
+void AmsHelper::updateAIR(AIRState new_state) {
+    ams.air_state = new_state;
+    switch (ams.air_state) {
+        case AIRState::INIT:
+            // Handle INIT state
+            digitalWrite(PIN_AIR_NEG, HIGH);
+            digitalWrite(PIN_AIR_POS, LOW);
+            digitalWrite(PIN_AIR_PRE, HIGH);
+            break;
+        case AIRState::ACTIVE:
+            // Handle ACTIVE state
+            digitalWrite(PIN_AIR_NEG, HIGH);
+            digitalWrite(PIN_AIR_POS, HIGH);
+            digitalWrite(PIN_AIR_PRE, LOW);
+            break;
+        case AIRState::SHUTDOWN:
+            // Handle SHUTDOWN state
+            digitalWrite(PIN_AIR_NEG, LOW);
+            digitalWrite(PIN_AIR_POS, LOW);
+            digitalWrite(PIN_AIR_PRE, LOW);
+            break;
+        default:
+            // Handle unknown state
+            break;
+    }
+}

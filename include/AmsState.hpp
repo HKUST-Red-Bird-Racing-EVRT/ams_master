@@ -7,16 +7,26 @@
 #define NUM_VCELL 14
 #define NUM_NTC 5
 
+enum class AIRState
+{
+    INIT = 0X00,
+    ACTIVE = 0X01,
+    SHUTDOWN = 0X02
+};
 
 struct AmsState
 {
-    bool cellbal_active = false;
-    bool cellbal_odd = false;
-    bool discharge_active = false;
-    bool fault_active = false;
+    bool cellbal_active = false;    // CellBal ON/OFF
+    bool cellbal_odd = false;       // CellBal Odd/Even (true = odd, false = even)
+    bool discharge_active = false;  // Discharge ON/OFF
+    bool fault_active = false;      // Fault TRUE/FALSE
+    bool host_vcu;                  // Host VCU/CHARGER
+    AIRState air_state = AIRState::INIT; // AIR State (INIT, ACTIVE, SHUTDOWN)
     uint16_t cell_voltages[NUM_SLAVE][NUM_VCELL];
     uint16_t voltage_min; // Minimum voltage in millivolts
     uint16_t voltage_max; // Maximum voltage in millivolts
+    uint8_t battery_soc; // State of Charge (SOC) in percentage (0-100)
+    int8_t coulomb_count; // Coulomb count in milliampere-hours (mAh)
     uint16_t ntc_temperatures[NUM_SLAVE][NUM_NTC];
     uint16_t temperature_min; 
     uint16_t temperature_max;

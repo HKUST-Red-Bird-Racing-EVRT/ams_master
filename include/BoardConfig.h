@@ -7,5 +7,14 @@
 #define PIN_INT_0 PIN_PD2
 #define PIN_INT_1 PIN_PD3
 
+#define PIN_HALL_LO PIN_PC2
+#define PIN_HALL_HI PIN_PC3
+
+#define PIN_AIR_NEG PIN_PD1
+#define PIN_AIR_POS PIN_PD4
+#define PIN_AIR_PRE PIN_PD5
+
+#define PIN_AMS_ERR PIN_PD0
+
 
 #endif // BOARDCONFIG_H
