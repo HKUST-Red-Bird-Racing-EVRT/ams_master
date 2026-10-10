@@ -10,8 +10,9 @@
 enum class AIRState
 {
     INIT = 0X00,
-    ACTIVE = 0X01,
-    SHUTDOWN = 0X02
+    PRECHARGE = 0X01,
+    ACTIVE = 0X02,
+    DISCHARGE = 0X03
 };
 
 struct AmsState
@@ -22,6 +23,7 @@ struct AmsState
     bool fault_active = false;      // Fault TRUE/FALSE
     bool host_vcu;                  // Host VCU/CHARGER
     AIRState air_state = AIRState::INIT; // AIR State (INIT, ACTIVE, SHUTDOWN)
+    uint32_t timestamp; // Timestamp of the last update in milliseconds
     uint16_t cell_voltages[NUM_SLAVE][NUM_VCELL];
     uint16_t voltage_min; // Minimum voltage in millivolts
     uint16_t voltage_max; // Maximum voltage in millivolts

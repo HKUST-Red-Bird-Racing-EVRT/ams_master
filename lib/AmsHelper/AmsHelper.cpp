@@ -54,29 +54,78 @@ void AmsHelper::updateBatterySOC(int8_t hall_lo, int8_t hall_hi) {
     // TODO: Implement a more accurate SOC calculation based on coulomb count and battery capacity
 }
 
-void AmsHelper::updateAIR(AIRState new_state) {
+void AmsHelper::setAIR(AIRState new_state) {
     ams.air_state = new_state;
     switch (ams.air_state) {
         case AIRState::INIT:
             // Handle INIT state
-            digitalWrite(PIN_AIR_NEG, HIGH);
-            digitalWrite(PIN_AIR_POS, LOW);
-            digitalWrite(PIN_AIR_PRE, HIGH);
-            break;
-        case AIRState::ACTIVE:
-            // Handle ACTIVE state
-            digitalWrite(PIN_AIR_NEG, HIGH);
-            digitalWrite(PIN_AIR_POS, HIGH);
-            digitalWrite(PIN_AIR_PRE, LOW);
-            break;
-        case AIRState::SHUTDOWN:
-            // Handle SHUTDOWN state
             digitalWrite(PIN_AIR_NEG, LOW);
             digitalWrite(PIN_AIR_POS, LOW);
             digitalWrite(PIN_AIR_PRE, LOW);
             break;
-        default:
-            // Handle unknown state
+
+        case AIRState::PRECHARGE:
+            // Handle PRECHARGE state
+            digitalWrite(PIN_AIR_NEG, HIGH);
+            digitalWrite(PIN_AIR_POS, LOW);
+            digitalWrite(PIN_AIR_PRE, HIGH);
+            break;
+
+        case AIRState::ACTIVE:
+            // Handle ACTIVE state
+            // Delay 100 after INIT, Voltage > 50% (Threshold)
+            digitalWrite(PIN_AIR_NEG, HIGH);
+            digitalWrite(PIN_AIR_POS, HIGH);
+            digitalWrite(PIN_AIR_PRE, LOW);  
+            break;
+
+        case AIRState::DISCHARGE:
+            // Handle DISCHARGE state
+            // When <60V, change to init, else keep discharging
+            digitalWrite(PIN_AIR_NEG, HIGH);
+            digitalWrite(PIN_AIR_POS, LOW);
+            digitalWrite(PIN_AIR_PRE, LOW);
+            break;
+    }
+}
+
+void AmsHelper::updateAIR()
+{
+    switch (ams.air_state) {
+        case AIRState::INIT:
+            // Handle INIT state
+            break;
+
+        case AIRState::PRECHARGE:
+            // Handle PRECHARGE state
+            uint16_t voltage_ac_iso = analogRead(PIN_AC_ISO);
+            uint16_t voltage_tc_iso = analogRead(PIN_TC_ISO);
+
+            if (voltage_tc_iso >= voltage_ac_iso * 0.95)
+            {
+                setAIR(AIRState::ACTIVE);
+            }
+
+            break;
+
+        case AIRState::ACTIVE:
+            // Handle ACTIVE state
+            if (digitalRead(PIN_SDC) == LOW)
+            {
+                setAIR(AIRState::DISCHARGE);
+            }
+            
+            break;
+
+        case AIRState::DISCHARGE:
+            // Handle DISCHARGE state
+            uint16_t voltage_tc_iso = analogRead(PIN_TC_ISO);
+
+            if (voltage_tc_iso < SHUTDOWN_VOLTAGE_THRESHOLD)
+            {
+                setAIR(AIRState::INIT);
+            }
+
             break;
     }
 }

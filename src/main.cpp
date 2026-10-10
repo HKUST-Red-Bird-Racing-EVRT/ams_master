@@ -59,10 +59,10 @@ void setup()
   pinMode(PIN_AIR_POS, OUTPUT);
   pinMode(PIN_AIR_PRE, OUTPUT);
   pinMode(PIN_AMS_ERR, OUTPUT);
+  pinMode(PIN_SDC, INPUT);
 
+  ams_helper.setAIR(AIRState::PRECHARGE);
   can_external_helper.setHost(); // Determine if the host is VCU or CHARGER
-  // Initialize the AIR state to INIT (Wait VCU command)
-  ams_helper.updateAIR(AIRState::INIT); // Initialize the AIR state
 }
 
 void loop()
@@ -77,6 +77,8 @@ void loop()
   - If timeout, set fault flag and fault slave
   - If no timeout, communicate with vcu
   */
+
+  ams_helper.updateAIR(); // Update the AIR state based on conditions
 
   for (uint8_t frame_index = 0; frame_index < NUM_SLAVE_FRAME; ++frame_index)
   {
@@ -100,13 +102,21 @@ void loop()
 
   if (ams.fault_flags)
   {
-    // Handle fault condition, e.g., log the fault, notify the user, etc.
+    digitalWrite(PIN_AMS_ERR, LOW); // Set AMS_ERR pin low if any fault is active
   }
   else
   {
-    // Normal operation, e.g., send data to VCU, perform other tasks, etc.
-    ams_helper.updateMaxMinCellVoltages();
-    ams_helper.updateMaxMinTemperatures();
-    ams_helper.updateBatterySOC(analogRead(PIN_HALL_LO), analogRead(PIN_HALL_HI));
+    digitalWrite(PIN_AMS_ERR, HIGH); // Set AMS_ERR pin high if no fault is active
+  }
+
+  // Normal operation, e.g., send data to VCU, perform other tasks, etc.
+  ams_helper.updateMaxMinCellVoltages();
+  ams_helper.updateMaxMinTemperatures();
+  ams_helper.updateBatterySOC(analogRead(PIN_HALL_LO), analogRead(PIN_HALL_HI));
+
+  if (millis() - ams.timestamp >= 1000) // Send data to VCU every 1 second
+  {
+    can_external_helper.sendHostData();
+    ams.timestamp = millis(); // Update the timestamp after sending data
   }
 }

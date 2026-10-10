@@ -17,7 +17,8 @@ class AmsHelper {
         void updateMaxMinCellVoltages();
         void updateMaxMinTemperatures();
         void updateBatterySOC(int8_t hall_lo, int8_t hall_hi);
-        void updateAIR(AIRState new_state);
+        void setAIR(AIRState new_state);
+        void updateAIR();
 
     private:
         AmsState &ams;
