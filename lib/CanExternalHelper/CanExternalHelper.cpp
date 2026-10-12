@@ -18,11 +18,16 @@ void CanExternalHelper::setHost()
 
     can_external.sendMessage(&send_frame); // Send the CAN frame to the slave
 
+    uint32_t start = millis();
     while (digitalRead(PIN_INT_1) == HIGH)
-        ;
-    can_external.readMessage(&read_frame); // Read the response from the slave
+    {
+        if (millis() - start > CAN_HOST_TIMEOUT)
+        {
+            return;
+        }
+    }
 
-    if (read_frame.can_id == CAN_EXTERNAL_DETERMINE_HOST_ADDRESS)
+    if (can_external.readMessage(&read_frame) == MCP2515::ERROR_OK && read_frame.can_id == CAN_EXTERNAL_DETERMINE_HOST_ADDRESS)
     {
         // Process the response from the slave
         // For example, you can check the data in read_frame.data to determine if the host is VCU or CHARGER

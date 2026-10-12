@@ -61,7 +61,7 @@ void setup()
   pinMode(PIN_AMS_ERR, OUTPUT);
   pinMode(PIN_SDC, INPUT);
 
-  ams_helper.setAIR(AIRState::PRECHARGE);
+  ams_helper.setAIR(AIRState::INIT);
   can_external_helper.setHost(); // Determine if the host is VCU or CHARGER
 }
 
@@ -80,6 +80,8 @@ void loop()
 
   ams_helper.updateAIR(); // Update the AIR state based on conditions
 
+  // no slave logic for video
+  /*
   for (uint8_t frame_index = 0; frame_index < NUM_SLAVE_FRAME; ++frame_index)
   {
     // if frame dropped, keep looping for 3-4 times to request the slave data again, and drain the buffer
@@ -99,6 +101,7 @@ void loop()
       }
     }
   }
+  */
 
   if (ams.fault_flags)
   {

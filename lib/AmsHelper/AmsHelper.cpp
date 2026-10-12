@@ -93,7 +93,12 @@ void AmsHelper::updateAIR()
 {
     switch (ams.air_state) {
         case AIRState::INIT:{
-            // Handle INIT state
+            // powered on = SDC closed
+            if (digitalRead(PIN_SDC) == HIGH)
+            {
+                setAIR(AIRState::PRECHARGE);
+            }
+
             break;}
 
         case AIRState::PRECHARGE:{
@@ -101,7 +106,7 @@ void AmsHelper::updateAIR()
             uint16_t voltage_ac_iso = analogRead(PIN_AC_ISO);
             uint16_t voltage_tc_iso = analogRead(PIN_TC_ISO);
 
-            if (voltage_tc_iso >= voltage_ac_iso * 0.95)
+            if (voltage_ac_iso > SHUTDOWN_VOLTAGE_THRESHOLD && voltage_tc_iso >= voltage_ac_iso * 0.95)
             {
                 setAIR(AIRState::ACTIVE);
             }

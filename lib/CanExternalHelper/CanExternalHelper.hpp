@@ -23,6 +23,8 @@ Determine Host Address (Determine host is VCU/CHARGER): 0x500
 #define CAN_EXTERNAL_TEMPERATURE_STAT_ADDRESS 0x410
 #define CAN_EXTERNAL_DETERMINE_HOST_ADDRESS 0x500
 
+#define CAN_HOST_TIMEOUT 500 // ms
+
 class CanExternalHelper
 {
 public:
