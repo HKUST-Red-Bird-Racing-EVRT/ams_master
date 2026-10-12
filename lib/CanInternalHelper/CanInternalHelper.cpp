@@ -70,7 +70,7 @@ void CanInternalHelper::drainCanBuffer()
                 buffer[slave_frame] = frame; // Store the received frame in the temporary buffer
                 ++expected_slave_index;
 
-                if (sizeof(buffer) == NUM_SLAVE)
+                if (expected_slave_index == NUM_SLAVE)
                 {
                     for (uint8_t i = 0; i < NUM_SLAVE; ++i)
                     {

@@ -92,11 +92,11 @@ void AmsHelper::setAIR(AIRState new_state) {
 void AmsHelper::updateAIR()
 {
     switch (ams.air_state) {
-        case AIRState::INIT:
+        case AIRState::INIT:{
             // Handle INIT state
-            break;
+            break;}
 
-        case AIRState::PRECHARGE:
+        case AIRState::PRECHARGE:{
             // Handle PRECHARGE state
             uint16_t voltage_ac_iso = analogRead(PIN_AC_ISO);
             uint16_t voltage_tc_iso = analogRead(PIN_TC_ISO);
@@ -106,18 +106,18 @@ void AmsHelper::updateAIR()
                 setAIR(AIRState::ACTIVE);
             }
 
-            break;
+            break;}
 
-        case AIRState::ACTIVE:
+        case AIRState::ACTIVE:{
             // Handle ACTIVE state
             if (digitalRead(PIN_SDC) == LOW)
             {
                 setAIR(AIRState::DISCHARGE);
             }
             
-            break;
+            break;}
 
-        case AIRState::DISCHARGE:
+        case AIRState::DISCHARGE:{
             // Handle DISCHARGE state
             uint16_t voltage_tc_iso = analogRead(PIN_TC_ISO);
 
@@ -126,6 +126,6 @@ void AmsHelper::updateAIR()
                 setAIR(AIRState::INIT);
             }
 
-            break;
+            break;}
     }
 }
