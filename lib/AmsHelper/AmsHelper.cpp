@@ -106,7 +106,7 @@ void AmsHelper::updateAIR()
             uint16_t voltage_ac_iso = analogRead(PIN_AC_ISO);
             uint16_t voltage_tc_iso = analogRead(PIN_TC_ISO);
 
-            if (voltage_ac_iso > SHUTDOWN_VOLTAGE_THRESHOLD && voltage_tc_iso >= voltage_ac_iso * 0.95)
+            if (voltage_ac_iso > SHUTDOWN_VOLTAGE_THRESHOLD && voltage_tc_iso >= voltage_ac_iso * TS_AC_RATIO)
             {
                 setAIR(AIRState::ACTIVE);
             }
