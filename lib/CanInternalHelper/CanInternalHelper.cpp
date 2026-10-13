@@ -44,10 +44,17 @@ void CanInternalHelper::drainCanBuffer()
     // This function will clear the CAN buffer and reset the timestamps
 
     uint8_t expected_slave_index = 0;           // Expected slave index for the first frame
-    can_frame buffer[NUM_SLAVE_FRAME] = {0}; // Temporary buffer to store received frames
+    can_frame buffer[NUM_SLAVE] = {0}; // Temporary buffer to store received frames
 
+    uint32_t start = millis();
     while (digitalRead(PIN_INT_0) == HIGH)
-        ;
+    {
+        if (millis() - start > CAN_TIMEOUT_MAX)
+        {
+            ams.fault_flags |= CAN_TIMEOUT_FAULT_BIT; // No slave replied
+            return;
+        }
+    }
 
     while (digitalRead(PIN_INT_0) == LOW)
     {
@@ -67,7 +74,7 @@ void CanInternalHelper::drainCanBuffer()
                     continue;
                 }
 
-                buffer[slave_frame] = frame; // Store the received frame in the temporary buffer
+                buffer[slave_index] = frame; // Store the received frame in the temporary buffer
                 ++expected_slave_index;
 
                 if (expected_slave_index == NUM_SLAVE)
@@ -148,7 +155,7 @@ void CanInternalHelper::packSlaveData(can_frame &rx_frame)
         uint8_t slave_index = buffer_index % 0x10;     // Extract the slave index from the CAN ID
         ams.fault_active = true;
         ams.fault_slave = slave_index;
-        ams.fault_flags = rx_frame.data[0]; // Assuming fault_flags is a 8-bit value
+        ams.fault_flags |= rx_frame.data[0]; // Assuming fault_flags is a 8-bit value
     }
 }
 

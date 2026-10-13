@@ -27,5 +27,6 @@
 // Constant Definitions
 #define SHUTDOWN_VOLTAGE_THRESHOLD 90
 #define TS_AC_RATIO 19/20
+#define PRECHARGE_TIMEOUT 500 // ms
 
 #endif // BOARDCONFIG_H

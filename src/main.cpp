@@ -88,6 +88,7 @@ void loop()
     uint8_t retry_count = 0;
     while (retry_count < 4)
     {
+      ams.fault_flags &= ~CAN_TIMEOUT_FAULT_BIT;// Clear the CAN timeout fault flag if no timeout occurred
       can_internal_helper.requestSlaveData(frame_index);
       can_internal_helper.drainCanBuffer();
       if (ams.fault_flags & CAN_TIMEOUT_FAULT_BIT)
@@ -96,7 +97,6 @@ void loop()
       }
       else
       {
-        ams.fault_flags &= ~CAN_TIMEOUT_FAULT_BIT; // Clear the CAN timeout fault flag if no timeout occurred
         break;
       }
     }

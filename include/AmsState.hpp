@@ -62,5 +62,6 @@ Bit 2 - 15: cellbal_flags for cell 0 - 13 (1 = balancing, 0 = not balancing)
 #define UNDERTEMPERATURE_FAULT_BIT  0x08
 #define I2C_TIMEOUT_FAULT_BIT       0x10
 #define CAN_TIMEOUT_FAULT_BIT       0x20
+#define PRECHARGE_TIMEOUT_FAULT_BIT 0x40
 
 #endif // AMSSTATE_HPP

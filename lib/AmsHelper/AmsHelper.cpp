@@ -14,11 +14,11 @@ void AmsHelper::resetCellBal() {
 }
 
 void AmsHelper::updateMaxMinCellVoltages() {
-    uint16_t voltage_min = 0;
+    uint16_t voltage_min = UINT16_MAX;
     uint16_t voltage_max = 0;
     for (uint8_t slave_index = 0; slave_index < NUM_SLAVE; ++slave_index) {
 
-        for (uint8_t cell_index = 1; cell_index < NUM_VCELL; ++cell_index) {
+        for (uint8_t cell_index = 0; cell_index < NUM_VCELL; ++cell_index) {
             if (ams.cell_voltages[slave_index][cell_index] < voltage_min) {
                 voltage_min = ams.cell_voltages[slave_index][cell_index];
             }
@@ -32,11 +32,11 @@ void AmsHelper::updateMaxMinCellVoltages() {
 }
 
 void AmsHelper::updateMaxMinTemperatures() {
-    uint16_t temperature_min = 0;
+    uint16_t temperature_min = UINT16_MAX;
     uint16_t temperature_max = 0;
     for (uint8_t slave_index = 0; slave_index < NUM_SLAVE; ++slave_index) {
 
-        for (uint8_t ntc_index = 1; ntc_index < NUM_NTC; ++ntc_index) {
+        for (uint8_t ntc_index = 0; ntc_index < NUM_NTC; ++ntc_index) {
             if (ams.ntc_temperatures[slave_index][ntc_index] < temperature_min) {
                 temperature_min = ams.ntc_temperatures[slave_index][ntc_index];
             }
@@ -66,6 +66,7 @@ void AmsHelper::setAIR(AIRState new_state) {
 
         case AIRState::PRECHARGE:
             // Handle PRECHARGE state
+            precharge_start = millis();
             digitalWrite(PIN_AIR_NEG, HIGH);
             digitalWrite(PIN_AIR_POS, LOW);
             digitalWrite(PIN_AIR_PRE, HIGH);
@@ -81,8 +82,8 @@ void AmsHelper::setAIR(AIRState new_state) {
 
         case AIRState::DISCHARGE:
             // Handle DISCHARGE state
-            // When <60V, change to init, else keep discharging
-            digitalWrite(PIN_AIR_NEG, HIGH);
+            // Discharge itself is hardware (K5 shorts MCU+ to MCU-)
+            digitalWrite(PIN_AIR_NEG, LOW);
             digitalWrite(PIN_AIR_POS, LOW);
             digitalWrite(PIN_AIR_PRE, LOW);
             break;
@@ -93,8 +94,8 @@ void AmsHelper::updateAIR()
 {
     switch (ams.air_state) {
         case AIRState::INIT:{
-            // powered on = SDC closed
-            if (digitalRead(PIN_SDC) == HIGH)
+            // powered on = SDC closed, and no fault active
+            if (digitalRead(PIN_SDC) == HIGH && !ams.fault_flags)
             {
                 setAIR(AIRState::PRECHARGE);
             }
@@ -109,6 +110,12 @@ void AmsHelper::updateAIR()
             if (voltage_ac_iso > SHUTDOWN_VOLTAGE_THRESHOLD && voltage_tc_iso >= voltage_ac_iso * TS_AC_RATIO)
             {
                 setAIR(AIRState::ACTIVE);
+            }
+            else if (millis() - precharge_start > PRECHARGE_TIMEOUT)
+            {
+                // TS never reached the ratio, stop precharging and send fault
+                ams.fault_flags |= PRECHARGE_TIMEOUT_FAULT_BIT;
+                setAIR(AIRState::DISCHARGE);
             }
 
             break;}

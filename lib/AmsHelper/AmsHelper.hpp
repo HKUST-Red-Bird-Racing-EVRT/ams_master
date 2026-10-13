@@ -22,6 +22,7 @@ class AmsHelper {
 
     private:
         AmsState &ams;
+        uint32_t precharge_start = 0; // millis() when PRECHARGE was entered
 
 };
 
