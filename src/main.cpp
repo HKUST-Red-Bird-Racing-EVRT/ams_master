@@ -63,6 +63,11 @@ void setup()
 
   ams_helper.setAIR(AIRState::INIT);
   can_external_helper.setHost(); // Determine if the host is VCU or CHARGER
+
+  // Test Hardware
+  // digitalWrite(PIN_AIR_NEG, HIGH);
+  // digitalWrite(PIN_AIR_POS, HIGH);
+  // digitalWrite(PIN_AIR_PRE, HIGH);
 }
 
 void loop()
@@ -105,12 +110,13 @@ void loop()
 
   if (ams.fault_flags)
   {
-    digitalWrite(PIN_AMS_ERR, LOW); // Set AMS_ERR pin low if any fault is active
+    digitalWrite(PIN_AMS_ERR, HIGH); // Set AMS_ERR pin high if any fault is active
   }
-  else
+  /*else
   {
-    digitalWrite(PIN_AMS_ERR, HIGH); // Set AMS_ERR pin high if no fault is active
+    digitalWrite(PIN_AMS_ERR, LOW); // Set AMS_ERR pin low if no fault is active
   }
+  */
 
   // Normal operation, e.g., send data to VCU, perform other tasks, etc.
   ams_helper.updateMaxMinCellVoltages();

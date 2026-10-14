@@ -95,7 +95,13 @@ void AmsHelper::updateAIR()
     switch (ams.air_state) {
         case AIRState::INIT:{
             // powered on = SDC closed, and no fault active
-            if (digitalRead(PIN_SDC) == HIGH && !ams.fault_flags)
+            if (analogRead(PIN_AC_ISO) < VOLTAGE_UV * NUM_SLAVE)
+            {
+                // ams.fault_flags |= UNDERVOLTAGE_FAULT_BIT;
+                digitalWrite(PIN_AMS_ERR, HIGH); // Set AMS_ERR pin high if any fault is active
+            }
+
+            else if (digitalRead(PIN_SDC) == HIGH && !ams.fault_flags)
             {
                 setAIR(AIRState::PRECHARGE);
             }
