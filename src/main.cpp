@@ -12,8 +12,8 @@
 #include "CanInternalHelper.hpp"
 #include "CanExternalHelper.hpp"
 
-MCP2515 can_internal(PIN_CAN0_CS);
-MCP2515 can_external(PIN_CAN1_CS);
+MCP2515 can_internal(PIN_CAN1_CS);
+MCP2515 can_external(PIN_CAN0_CS);
 can_frame rx_slave_frame;
 
 AmsState ams;
@@ -61,13 +61,8 @@ void setup()
   pinMode(PIN_AMS_ERR, OUTPUT);
   pinMode(PIN_SDC, INPUT);
 
-  ams_helper.setAIR(AIRState::INIT);
+  ams_helper.setAIR(AIRState::INIT); // Set initial AIR state to PRECHARGE
   can_external_helper.setHost(); // Determine if the host is VCU or CHARGER
-
-  // Test Hardware
-  // digitalWrite(PIN_AIR_NEG, HIGH);
-  // digitalWrite(PIN_AIR_POS, HIGH);
-  // digitalWrite(PIN_AIR_PRE, HIGH);
 }
 
 void loop()
@@ -85,8 +80,6 @@ void loop()
 
   ams_helper.updateAIR(); // Update the AIR state based on conditions
 
-  // no slave logic for video
-  /*
   for (uint8_t frame_index = 0; frame_index < NUM_SLAVE_FRAME; ++frame_index)
   {
     // if frame dropped, keep looping for 3-4 times to request the slave data again, and drain the buffer
@@ -106,7 +99,7 @@ void loop()
       }
     }
   }
-  */
+  
 
   if (ams.fault_flags)
   {

@@ -13,12 +13,14 @@
 
 //  MCP2515 CAN Address
 /*
+Panic Address: 0x100 (to be determined)
 Host Request Address: 0x250 (to be determined)
 Battery Stat Address: 0x400
 Temperature Stat Address: 0x410
 Determine Host Address (Determine host is VCU/CHARGER): 0x500
 */
 
+#define CAN_EXTERNAL_PANIC_ADDRESS 0x100
 #define CAN_EXTERNAL_BATTERY_STAT_ADDRESS 0x400
 #define CAN_EXTERNAL_TEMPERATURE_STAT_ADDRESS 0x410
 #define CAN_EXTERNAL_DETERMINE_HOST_ADDRESS 0x500

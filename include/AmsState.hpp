@@ -21,6 +21,7 @@ struct AmsState
     bool cellbal_odd = false;       // CellBal Odd/Even (true = odd, false = even)
     bool discharge_active = false;  // Discharge ON/OFF
     bool fault_active = false;      // Fault TRUE/FALSE
+    bool sdc_active = true;          // SDC TRUE/FALSE
     bool host_vcu;                  // Host VCU/CHARGER
     AIRState air_state = AIRState::INIT; // AIR State (INIT, ACTIVE, SHUTDOWN)
     uint32_t timestamp; // Timestamp of the last update in milliseconds
@@ -63,5 +64,6 @@ Bit 2 - 15: cellbal_flags for cell 0 - 13 (1 = balancing, 0 = not balancing)
 #define I2C_TIMEOUT_FAULT_BIT       0x10
 #define CAN_TIMEOUT_FAULT_BIT       0x20
 #define PRECHARGE_TIMEOUT_FAULT_BIT 0x40
+#define SDC_FAULT_BIT               0x80
 
 #endif // AMSSTATE_HPP

@@ -39,6 +39,18 @@ void CanExternalHelper::setHost()
 void CanExternalHelper::sendHostData()
 {
     // Create a CAN frame to send the host data to the slaves
+    if (ams.fault_flags)
+    {
+        // If SDC fault is active, send a panic message to the slaves
+        can_frame send_panic_frame = {
+            CAN_EXTERNAL_PANIC_ADDRESS, // CAN ID for the panic message
+            1,                          // Data length code (DLC)
+            ams.fault_flags             // Panic data (can be customized as needed)
+        };
+
+        can_external.sendMessage(&send_panic_frame); // Send the CAN frame to the slave
+    }
+
     can_frame send_battery_frame = {
         CAN_EXTERNAL_BATTERY_STAT_ADDRESS, // CAN ID for the battery status
         5,                              // Data length code (DLC)
