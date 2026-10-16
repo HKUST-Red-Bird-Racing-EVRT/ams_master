@@ -8,6 +8,11 @@
 #define TIME_SETUP 1000
 #define DEFAULT_VOLTAGE_MAX 4250
 #define DEFAULT_VOLTAGE_MIN 3700
+constexpr uint8_t VOLTAGE_DIVSOR = 127;
+constexpr uint16_t mV_PER_V = 1000;
+constexpr float VCC = 5.0;
+constexpr uint16_t ADC_RESOLUTION = 1023;
+constexpr uint16_t AC_MIN_START_VOLTAGE_THRESHOLD = (double)VOLTAGE_UV * NUM_VCELL * NUM_SLAVE / VOLTAGE_DIVSOR / mV_PER_V / VCC * ADC_RESOLUTION; // 3700mV * 14 * 10 / 127 = 4070mV
 
 class AmsHelper {
     public:

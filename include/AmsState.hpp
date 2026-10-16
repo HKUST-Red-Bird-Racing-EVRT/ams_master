@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define NUM_SLAVE 10
+#define NUM_SLAVE 1
 #define NUM_VCELL 14
 #define NUM_NTC 5
 

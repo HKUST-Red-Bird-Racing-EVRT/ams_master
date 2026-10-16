@@ -1,3 +1,8 @@
+/**
+ * @file main.cpp
+ * @brief Main entry point for the AMS Master Controller
+ */
+
 #include <Arduino.h>
 
 // ignore -Wpedantic warnings for mcp2515.h

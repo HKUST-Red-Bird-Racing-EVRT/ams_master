@@ -119,9 +119,9 @@ void AmsHelper::updateAIR()
     case AIRState::INIT:
     {
         // powered on = SDC closed, and no fault active
-        if (analogRead(PIN_AC_ISO) < VOLTAGE_UV * NUM_SLAVE)
+        if (analogRead(PIN_AC_ISO) < AC_MIN_START_VOLTAGE_THRESHOLD)
         {
-            // ams.fault_flags |= UNDERVOLTAGE_FAULT_BIT;
+            ams.fault_flags |= UNDERVOLTAGE_FAULT_BIT;
             digitalWrite(PIN_AMS_ERR, HIGH); // Set AMS_ERR pin high if any fault is active
         }
 
